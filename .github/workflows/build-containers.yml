@@ -45,3 +45,8 @@ jobs:
       - name: Verify Image
         run: |
           docker buildx imagetools inspect ghcr.io/nhatnice/postiz-app:${{ github.ref_name }}
+
+      - name: Deploy to Dokploy
+        uses: fongfan999/github-actions/dokploy-deploy@main
+        with:
+          deploy_hook_url: ${{ secrets.DOKPLOY_DEPLOY_HOOK_URL }}
