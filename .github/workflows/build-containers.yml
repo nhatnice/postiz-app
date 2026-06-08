@@ -46,7 +46,25 @@ jobs:
         run: |
           docker buildx imagetools inspect ghcr.io/nhatnice/postiz-app:${{ github.ref_name }}
 
-      - name: Deploy to Dokploy
-        uses: fongfan999/github-actions/dokploy-deploy@main
-        with:
-          deploy_hook_url: ${{ secrets.DOKPLOY_DEPLOY_HOOK_URL }}
+      - name: Trigger deployment webhook
+        shell: bash
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.DOKPLOY_DEPLOY_HOOK_URL }}
+        run: |
+          echo "Triggering Dokploy deployment..."
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          PAYLOAD=$(jq -n \
+            --arg ref "${GITHUB_REF}" \
+            --arg id "${GITHUB_SHA}" \
+            --arg message "$COMMIT_MESSAGE" \
+            '{ref: $ref, head_commit: {id: $id, message: $message}}')
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: push" \
+            -d "$PAYLOAD" \
+            "$DEPLOY_HOOK_URL" || echo "Webhook failed, but continuing..."
+
+      - name: Deploy done
+        shell: bash
+        run: |
+          echo "Deploy done"
