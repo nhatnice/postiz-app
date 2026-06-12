@@ -91,6 +91,12 @@ export async function proxy(request: NextRequest) {
 
   const org = nextUrl.searchParams.get('org');
   const url = new URL(nextUrl).search;
+
+  // Unauthenticated root → /about (landing page) instead of /auth
+  if (nextUrl.pathname === '/' && !authCookie) {
+    return NextResponse.redirect(new URL('/about', nextUrl.href));
+  }
+
   if (!nextUrl.pathname.startsWith('/auth') && !authCookie) {
     const providers = ['google', 'settings'];
     const findIndex = providers.find((p) => nextUrl.href.indexOf(p) > -1);
